@@ -74,8 +74,8 @@ fn main() -> Result<(), SDLErrs> {
 
     // let mut pla_movement_posisiton = world.query::<(&MovementComp, With<PlayerComp>)>();
     let mut update_mob_acceleration = world.query::<(&mut AccelerationComp, &MovementComp, &MobComp)>();
-    let mut update_mob_self_collition = world.query::<(&mut AccelerationComp, &mut MobComp, Entity, &mut MovementComp)>();
-    let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &MobComp, Entity, &mut MovementComp)>();
+    let mut update_mob_self_collition = world.query::<(&mut AccelerationComp, &MobComp, Entity, &MovementComp)>();
+    let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &mut MobComp, Entity, &mut MovementComp)>();
     let mut update_all = world.query::<(&mut AccelerationComp, &mut SpriteComp, &mut MovementComp)>();
 
 
@@ -122,7 +122,7 @@ fn main() -> Result<(), SDLErrs> {
             // }
 
             // mob other mob collision
-            for (mut dir1, mut mob1, entt1, mut movement1) in unsafe { update_mob_self_collition.iter_unchecked(&world) } {
+            for (mut  dir1,  mob1, entt1,  movement1) in unsafe { update_mob_self_collition.iter_unchecked(&world) }  {
                 const DIS: f32 = 40.0 * 40.0;
                 const DIS2: f32 = 20.0 * 20.0;
 
@@ -144,7 +144,7 @@ fn main() -> Result<(), SDLErrs> {
                 }
 
 
-                for (mut dir2, _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
+                for (mut dir2, mut mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
                     if entt1 != entt2 {
 
 
@@ -170,17 +170,24 @@ fn main() -> Result<(), SDLErrs> {
                             let hyp = dist_squered.sqrt();
                             x /= hyp;
                             y /= hyp;
-                            // mob1.rotate_dir.x *= -1.0;
-                            // mob1.rotate_dir.y *= -1.0;
                             let normalized = if dist_squered != 0.0 { (x / dist_squered, y / dist_squered) } else { (x, y) };
 
                             if dir1.acceleration.x > 0.0 || dir1.acceleration.x < 0.0  {
-                                movement2.position.x += -(normalized.0 * VEL);
-                                dir2.acceleration.x = -(x * VEL);
+                                // mob2.rotate_dir.x *= mob1.rotate_dir.x;
+                                // mob2.rotate_dir.x *= -1.0;
+
+                                movement2.position.x += -(normalized.0 * VEL * 5.0);
+                                // dir2.acceleration.x = -(x * VEL);
+                                dir2.acceleration.x = dir1.acceleration.x;
                             }
                             if dir1.acceleration.y > 0.0 || dir1.acceleration.y < 0.0{
-                                movement2.position.y += -(normalized.1 * VEL);
-                                dir2.acceleration.y = -(y * VEL);
+                                // mob2.rotate_dir.y *= mob2.rotate_dir.x;
+                                // mob2.rotate_dir.y *= -1.0;
+
+                                movement2.position.y += -(normalized.1 * VEL * 5.0);
+                                // dir2.acceleration.y = -(y * VEL);
+                                dir2.acceleration.y = dir1.acceleration.y;
+
                             }
 
 
