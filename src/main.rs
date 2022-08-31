@@ -73,9 +73,9 @@ fn main() -> Result<(), SDLErrs> {
     let mut pla_acceleration = world.query::<(&mut AccelerationComp, With<PlayerComp>)>();
 
     // let mut pla_movement_posisiton = world.query::<(&MovementComp, With<PlayerComp>)>();
-    let mut update_mob_acceleration = world.query::<(&mut AccelerationComp, &MovementComp, &MobComp)>();
+    // let mut update_mob_acceleration = world.query::<(&mut AccelerationComp, &MovementComp, &MobComp)>();
     let mut update_mob_self_collition = world.query::<(&mut AccelerationComp, &MobComp, Entity, &MovementComp)>();
-    let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &mut MobComp, Entity, &mut MovementComp)>();
+    let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &MobComp, Entity, &mut MovementComp)>();
     let mut update_all = world.query::<(&mut AccelerationComp, &mut SpriteComp, &mut MovementComp)>();
 
 
@@ -116,12 +116,8 @@ fn main() -> Result<(), SDLErrs> {
 
 
             // mob direction of movement and/or rotaion around player
-            let pla_position = (*world.get::<MovementComp>(pla).unwrap()).position.clone();
-            // for (mut mob_dir , mob_movement, mob) in update_mob_acceleration.iter_mut(&mut world) {
-            //
-            // }
-
             // mob other mob collision
+            let pla_position = (*world.get::<MovementComp>(pla).unwrap()).position.clone();
             for (mut dir1, mob1, entt1, movement1) in unsafe { update_mob_self_collition.iter_unchecked(&world) } {
                 const DIS: f32 = 40.0 * 40.0;
                 const DIS2: f32 = 20.0 * 20.0;
@@ -139,28 +135,14 @@ fn main() -> Result<(), SDLErrs> {
                 } else {
                     dir1.acceleration.x = (dir_y * VEL) * mob1.rotate_dir.x;
                     dir1.acceleration.y = (dir_x * VEL) * mob1.rotate_dir.y;
-                    // dir1.acceleration.x = -(dir_x * VEL);
-                    // dir1.acceleration.y = -(dir_y * VEL);
                 }
 
-
+                // collition with othe mob
                 for (mut dir2,  _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
                     if entt1 == entt2 {
                         continue;
                     }
-                    // dir1.acceleration.x = (x * VEL);
-                    // dir1.acceleration.y = (y * VEL);
 
-
-                    // dir2.acceleration.x = -(x * VEL);
-                    // dir2.acceleration.y = -(y * VEL);
-
-                    // dbg!(normalized);
-                    // movement1.position.x += normalized.0 * VEL;
-                    // movement1.position.y += normalized.1 * VEL;
-                    // let other = Rect::new(movement2.position.x as i32, movement2.position.y as i32, 16 * 3, 16 * 3);
-                    // let this = Rect::new(movement1.position.x as i32, movement1.position.y as i32, 16 * 3, 16 * 3);
-                    // if this.has_intersection(&other) {
                     let mut x = movement1.position.x - movement2.position.x;
                     let mut y = movement1.position.y - movement2.position.y;
                     let dist_squered = x * x + y * y;
@@ -175,25 +157,13 @@ fn main() -> Result<(), SDLErrs> {
                     let normalized = if dist_squered != 0.0 { (x / dist_squered, y / dist_squered) } else { (x, y) };
 
                     if dir1.acceleration.x > 0.0 || dir1.acceleration.x < 0.0 {
-                        // mob2.rotate_dir.x *= mob1.rotate_dir.x;
-                        // mob2.rotate_dir.x *= -1.0;
-
                         movement2.position.x += -(normalized.0 * VEL * 5.0);
-                        // dir2.acceleration.x = -(x * VEL);
                         dir2.acceleration.x = dir1.acceleration.x;
                     }
                     if dir1.acceleration.y > 0.0 || dir1.acceleration.y < 0.0 {
-                        // mob2.rotate_dir.y *= mob2.rotate_dir.x;
-                        // mob2.rotate_dir.y *= -1.0;
-
                         movement2.position.y += -(normalized.1 * VEL * 5.0);
-                        // dir2.acceleration.y = -(y * VEL);
                         dir2.acceleration.y = dir1.acceleration.y;
                     }
-
-
-                    // movement2.position.x += -(normalized.0 * VEL);
-                    // movement2.position.y += -(normalized.1 * VEL);
                 }
             }
 
@@ -220,6 +190,7 @@ fn main() -> Result<(), SDLErrs> {
             core.clear();
 
             // render all sprites
+            // TODO: make id to NOT sort every frame
             let mut rendr = render_all.iter(&world).collect::<Vec<_>>();
             rendr.sort_unstable_by_key(|a| a.pos.y() + a.srs.width() / 2);
             for sprite in rendr {
