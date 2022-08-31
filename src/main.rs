@@ -122,7 +122,7 @@ fn main() -> Result<(), SDLErrs> {
             // }
 
             // mob other mob collision
-            for (mut  dir1,  mob1, entt1,  movement1) in unsafe { update_mob_self_collition.iter_unchecked(&world) }  {
+            for (mut dir1, mob1, entt1, movement1) in unsafe { update_mob_self_collition.iter_unchecked(&world) } {
                 const DIS: f32 = 40.0 * 40.0;
                 const DIS2: f32 = 20.0 * 20.0;
 
@@ -144,57 +144,56 @@ fn main() -> Result<(), SDLErrs> {
                 }
 
 
-                for (mut dir2, mut mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
-                    if entt1 != entt2 {
-
-
-
-                        // dir1.acceleration.x = (x * VEL);
-                        // dir1.acceleration.y = (y * VEL);
-
-
-                        // dir2.acceleration.x = -(x * VEL);
-                        // dir2.acceleration.y = -(y * VEL);
-
-                        // dbg!(normalized);
-                        // movement1.position.x += normalized.0 * VEL;
-                        // movement1.position.y += normalized.1 * VEL;
-                        // let other = Rect::new(movement2.position.x as i32, movement2.position.y as i32, 16 * 3, 16 * 3);
-                        // let this = Rect::new(movement1.position.x as i32, movement1.position.y as i32, 16 * 3, 16 * 3);
-                        // if this.has_intersection(&other) {
-                        let mut x = movement1.position.x - movement2.position.x;
-                        let mut y = movement1.position.y - movement2.position.y;
-                        let dist_squered = x * x + y * y;
-                        if  DIS  > dist_squered {
-
-                            let hyp = dist_squered.sqrt();
-                            x /= hyp;
-                            y /= hyp;
-                            let normalized = if dist_squered != 0.0 { (x / dist_squered, y / dist_squered) } else { (x, y) };
-
-                            if dir1.acceleration.x > 0.0 || dir1.acceleration.x < 0.0  {
-                                // mob2.rotate_dir.x *= mob1.rotate_dir.x;
-                                // mob2.rotate_dir.x *= -1.0;
-
-                                movement2.position.x += -(normalized.0 * VEL * 5.0);
-                                // dir2.acceleration.x = -(x * VEL);
-                                dir2.acceleration.x = dir1.acceleration.x;
-                            }
-                            if dir1.acceleration.y > 0.0 || dir1.acceleration.y < 0.0{
-                                // mob2.rotate_dir.y *= mob2.rotate_dir.x;
-                                // mob2.rotate_dir.y *= -1.0;
-
-                                movement2.position.y += -(normalized.1 * VEL * 5.0);
-                                // dir2.acceleration.y = -(y * VEL);
-                                dir2.acceleration.y = dir1.acceleration.y;
-
-                            }
-
-
-                            // movement2.position.x += -(normalized.0 * VEL);
-                            // movement2.position.y += -(normalized.1 * VEL);
-                        }
+                for (mut dir2,  _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
+                    if entt1 == entt2 {
+                        continue;
                     }
+                    // dir1.acceleration.x = (x * VEL);
+                    // dir1.acceleration.y = (y * VEL);
+
+
+                    // dir2.acceleration.x = -(x * VEL);
+                    // dir2.acceleration.y = -(y * VEL);
+
+                    // dbg!(normalized);
+                    // movement1.position.x += normalized.0 * VEL;
+                    // movement1.position.y += normalized.1 * VEL;
+                    // let other = Rect::new(movement2.position.x as i32, movement2.position.y as i32, 16 * 3, 16 * 3);
+                    // let this = Rect::new(movement1.position.x as i32, movement1.position.y as i32, 16 * 3, 16 * 3);
+                    // if this.has_intersection(&other) {
+                    let mut x = movement1.position.x - movement2.position.x;
+                    let mut y = movement1.position.y - movement2.position.y;
+                    let dist_squered = x * x + y * y;
+                    if DIS < dist_squered {
+                        continue;
+                    }
+
+
+                    let hyp = dist_squered.sqrt();
+                    x /= hyp;
+                    y /= hyp;
+                    let normalized = if dist_squered != 0.0 { (x / dist_squered, y / dist_squered) } else { (x, y) };
+
+                    if dir1.acceleration.x > 0.0 || dir1.acceleration.x < 0.0 {
+                        // mob2.rotate_dir.x *= mob1.rotate_dir.x;
+                        // mob2.rotate_dir.x *= -1.0;
+
+                        movement2.position.x += -(normalized.0 * VEL * 5.0);
+                        // dir2.acceleration.x = -(x * VEL);
+                        dir2.acceleration.x = dir1.acceleration.x;
+                    }
+                    if dir1.acceleration.y > 0.0 || dir1.acceleration.y < 0.0 {
+                        // mob2.rotate_dir.y *= mob2.rotate_dir.x;
+                        // mob2.rotate_dir.y *= -1.0;
+
+                        movement2.position.y += -(normalized.1 * VEL * 5.0);
+                        // dir2.acceleration.y = -(y * VEL);
+                        dir2.acceleration.y = dir1.acceleration.y;
+                    }
+
+
+                    // movement2.position.x += -(normalized.0 * VEL);
+                    // movement2.position.y += -(normalized.1 * VEL);
                 }
             }
 
