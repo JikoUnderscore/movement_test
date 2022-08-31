@@ -1,0 +1,11 @@
+[package]
+name = "movement_test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sdl2-sys = {version = "*", features= ["image", "ttf"]}
+bevy_ecs = {version = "*"}
+rand = "*"
