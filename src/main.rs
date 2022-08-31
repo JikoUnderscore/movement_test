@@ -138,16 +138,16 @@ fn main() -> Result<(), SDLErrs> {
                 }
 
                 // collition with othe mob
-                for (mut dir2,  _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
+                'inner: for (mut dir2,  _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
                     if entt1 == entt2 {
-                        continue;
+                        continue 'inner;
                     }
 
                     let mut x = movement1.position.x - movement2.position.x;
                     let mut y = movement1.position.y - movement2.position.y;
                     let dist_squered = x * x + y * y;
                     if DIS < dist_squered {
-                        continue;
+                        continue 'inner;
                     }
 
 
