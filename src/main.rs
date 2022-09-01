@@ -54,7 +54,7 @@ fn main() -> Result<(), SDLErrs> {
     let mut rng = rand::thread_rng();
 
 
-    for i in 0..20 {
+    for i in 0..2 {
         let r = rng.gen_range(0..3);
         let mob_src = Rect::new(MOB_LIST[r].0, MOB_LIST[r].1, MOB_LIST[r].2, MOB_LIST[r].3);
         let (rand_x, rand_y) = random_pos_xy(i);
@@ -99,6 +99,11 @@ fn main() -> Result<(), SDLErrs> {
                 } else if keys.is_scancode_pressed(events::ScanCode::S) {
                     dir.acceleration.y = VEL;
                 }
+
+                if dir.acceleration.x != 0.0 && dir.acceleration.y != 0.0 {
+                    dir.acceleration.x *= std::f32::consts::FRAC_1_SQRT_2;
+                    dir.acceleration.y *= std::f32::consts::FRAC_1_SQRT_2;
+                }
             }
 
             while let Some(w_event) = events::poll_iter() {
@@ -122,8 +127,10 @@ fn main() -> Result<(), SDLErrs> {
                 let distance_squared = dir_x * dir_x + dir_y * dir_y;
 
                 let hyp = (dir_x * dir_x + dir_y * dir_y).sqrt();
+                // normalized
                 dir_x /= hyp;
                 dir_y /= hyp;
+
                 if DIS < distance_squared {
                     dir1.acceleration.x = dir_x * VEL;
                     dir1.acceleration.y = dir_y * VEL;
@@ -174,11 +181,6 @@ fn main() -> Result<(), SDLErrs> {
 
             // update all movement
             for (mut dir, mut sprite, mut movement) in update_all.iter_mut(&mut world) {
-                if dir.acceleration.x != 0.0 && dir.acceleration.y != 0.0 {
-                    dir.acceleration.x *= std::f32::consts::FRAC_1_SQRT_2;
-                    dir.acceleration.y *= std::f32::consts::FRAC_1_SQRT_2;
-                }
-
                 movement.position.x += dir.acceleration.x * fps_ctrl.dt;
                 movement.position.y += dir.acceleration.y * fps_ctrl.dt;
 
