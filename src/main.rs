@@ -54,7 +54,7 @@ fn main() -> Result<(), SDLErrs> {
     let mut rng = rand::thread_rng();
 
 
-    for i in 0..11 {
+    for i in 0..20 {
         let r = rng.gen_range(0..3);
         let mob_src = Rect::new(MOB_LIST[r].0, MOB_LIST[r].1, MOB_LIST[r].2, MOB_LIST[r].3);
         let (rand_x, rand_y) = random_pos_xy(i);
@@ -72,10 +72,9 @@ fn main() -> Result<(), SDLErrs> {
     let mut render_all = world.query::<&SpriteComp>();
     let mut pla_acceleration = world.query::<(&mut AccelerationComp, With<PlayerComp>)>();
 
-    // let mut pla_movement_posisiton = world.query::<(&MovementComp, With<PlayerComp>)>();
-    // let mut update_mob_acceleration = world.query::<(&mut AccelerationComp, &MovementComp, &MobComp)>();
-    let mut update_mob_self_collition = world.query::<(&mut AccelerationComp, &MobComp, Entity, &MovementComp)>();
-    let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &MobComp, Entity, &mut MovementComp)>();
+    let mut update_mob = world.query::<(&mut AccelerationComp, &MobComp, &MovementComp)>();
+    let mut update_mob_self_collition1 = world.query::<(&AccelerationComp, &MobComp, Entity, &MovementComp)>();
+    let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &mut MobComp, Entity, &mut MovementComp)>();
     let mut update_all = world.query::<(&mut AccelerationComp, &mut SpriteComp, &mut MovementComp)>();
 
 
@@ -113,15 +112,11 @@ fn main() -> Result<(), SDLErrs> {
         }
 //--------- UPDATE
         {
-
-
+            const DIS: f32 = 40.0 * 40.0;
+            const DIS2: f32 = 20.0 * 20.0;
             // mob direction of movement and/or rotaion around player
-            // mob other mob collision
             let pla_position = (*world.get::<MovementComp>(pla).unwrap()).position.clone();
-            for (mut dir1, mob1, entt1, movement1) in unsafe { update_mob_self_collition.iter_unchecked(&world) } {
-                const DIS: f32 = 40.0 * 40.0;
-                const DIS2: f32 = 20.0 * 20.0;
-
+            for (mut dir1, mob1, movement1) in update_mob.iter_mut(&mut world) {
                 let mut dir_x = pla_position.x - movement1.position.x;
                 let mut dir_y = pla_position.y - movement1.position.y;
                 let distance_squared = dir_x * dir_x + dir_y * dir_y;
@@ -136,9 +131,12 @@ fn main() -> Result<(), SDLErrs> {
                     dir1.acceleration.x = (dir_y * VEL) * mob1.rotate_dir.x;
                     dir1.acceleration.y = (dir_x * VEL) * mob1.rotate_dir.y;
                 }
+            }
 
-                // collition with othe mob
-                'inner: for (mut dir2,  _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
+            // mob other mob collision
+            for (dir1, _mob1, entt1, movement1) in update_mob_self_collition1.iter(&world) {
+                // collition with other mob
+                'inner: for (mut dir2, _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
                     if entt1 == entt2 {
                         continue 'inner;
                     }
@@ -156,13 +154,20 @@ fn main() -> Result<(), SDLErrs> {
                     y /= hyp;
                     let normalized = if dist_squered != 0.0 { (x / dist_squered, y / dist_squered) } else { (x, y) };
 
+
                     if dir1.acceleration.x > 0.0 || dir1.acceleration.x < 0.0 {
                         movement2.position.x += -(normalized.0 * VEL * 5.0);
-                        dir2.acceleration.x = dir1.acceleration.x;
+                        // if mob1.rotate_dir.x != mob2.rotate_dir.x {
+                        //     mob2.rotate_dir.x *= -1.0;
+                        // }
+
                     }
                     if dir1.acceleration.y > 0.0 || dir1.acceleration.y < 0.0 {
                         movement2.position.y += -(normalized.1 * VEL * 5.0);
-                        dir2.acceleration.y = dir1.acceleration.y;
+
+                        // if mob1.rotate_dir.y != mob2.rotate_dir.y {
+                        //     mob2.rotate_dir.y *= -1.0;
+                        // }
                     }
                 }
             }
