@@ -54,7 +54,7 @@ fn main() -> Result<(), SDLErrs> {
     let mut rng = rand::thread_rng();
 
 
-    for i in 0..2 {
+    for i in 0..20 {
         let r = rng.gen_range(0..3);
         let mob_src = Rect::new(MOB_LIST[r].0, MOB_LIST[r].1, MOB_LIST[r].2, MOB_LIST[r].3);
         let (rand_x, rand_y) = random_pos_xy(i);
@@ -73,7 +73,7 @@ fn main() -> Result<(), SDLErrs> {
     let mut pla_acceleration = world.query::<(&mut AccelerationComp, With<PlayerComp>)>();
 
     let mut update_mob = world.query::<(&mut AccelerationComp, &MobComp, &MovementComp)>();
-    let mut update_mob_self_collition1 = world.query::<(&AccelerationComp, &MobComp, Entity, &MovementComp)>();
+    let mut update_mob_self_collition1 = world.query::<(&mut AccelerationComp, &MobComp, Entity, &MovementComp)>();
     let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &mut MobComp, Entity, &mut MovementComp)>();
     let mut update_all = world.query::<(&mut AccelerationComp, &mut SpriteComp, &mut MovementComp)>();
 
@@ -90,14 +90,14 @@ fn main() -> Result<(), SDLErrs> {
         {
             for (mut dir, _pla) in pla_acceleration.iter_mut(&mut world) {
                 if keys.is_scancode_pressed(events::ScanCode::A) {
-                    dir.acceleration.x = -VEL;
+                    dir.acceleration.x = -1.0;
                 } else if keys.is_scancode_pressed(events::ScanCode::D) {
-                    dir.acceleration.x = VEL;
+                    dir.acceleration.x = 1.0;
                 }
                 if keys.is_scancode_pressed(events::ScanCode::W) {
-                    dir.acceleration.y = -VEL;
+                    dir.acceleration.y = -1.0;
                 } else if keys.is_scancode_pressed(events::ScanCode::S) {
-                    dir.acceleration.y = VEL;
+                    dir.acceleration.y = 1.0;
                 }
 
                 if dir.acceleration.x != 0.0 && dir.acceleration.y != 0.0 {
@@ -132,16 +132,16 @@ fn main() -> Result<(), SDLErrs> {
                 dir_y /= hyp;
 
                 if DIS < distance_squared {
-                    dir1.acceleration.x = dir_x * VEL;
-                    dir1.acceleration.y = dir_y * VEL;
+                    dir1.acceleration.x = dir_x ;
+                    dir1.acceleration.y = dir_y;
                 } else {
-                    dir1.acceleration.x = (dir_y * VEL) * mob1.rotate_dir.x;
-                    dir1.acceleration.y = (dir_x * VEL) * mob1.rotate_dir.y;
+                    dir1.acceleration.x = (dir_y) * mob1.rotate_dir.x;
+                    dir1.acceleration.y = (dir_x) * mob1.rotate_dir.y;
                 }
             }
 
             // mob other mob collision
-            for (dir1, _mob1, entt1, movement1) in update_mob_self_collition1.iter(&world) {
+            for (mut dir1, _mob1, entt1, movement1) in unsafe { update_mob_self_collition1.iter_unchecked(&world) } {
                 // collition with other mob
                 'inner: for (mut dir2, _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
                     if entt1 == entt2 {
@@ -151,38 +151,24 @@ fn main() -> Result<(), SDLErrs> {
                     let mut x = movement1.position.x - movement2.position.x;
                     let mut y = movement1.position.y - movement2.position.y;
                     let dist_squered = x * x + y * y;
-                    if DIS < dist_squered {
+                    if dist_squered > DIS || dist_squered < 0.0  {
                         continue 'inner;
                     }
-
 
                     let hyp = dist_squered.sqrt();
                     x /= hyp;
                     y /= hyp;
-                    let normalized = if dist_squered != 0.0 { (x / dist_squered, y / dist_squered) } else { (x, y) };
 
 
-                    if dir1.acceleration.x > 0.0 || dir1.acceleration.x < 0.0 {
-                        movement2.position.x += -(normalized.0 * VEL * 5.0);
-                        // if mob1.rotate_dir.x != mob2.rotate_dir.x {
-                        //     mob2.rotate_dir.x *= -1.0;
-                        // }
-
-                    }
-                    if dir1.acceleration.y > 0.0 || dir1.acceleration.y < 0.0 {
-                        movement2.position.y += -(normalized.1 * VEL * 5.0);
-
-                        // if mob1.rotate_dir.y != mob2.rotate_dir.y {
-                        //     mob2.rotate_dir.y *= -1.0;
-                        // }
-                    }
+                    dir1.acceleration.x += x;
+                    dir1.acceleration.y += y;
                 }
             }
 
             // update all movement
             for (mut dir, mut sprite, mut movement) in update_all.iter_mut(&mut world) {
-                movement.position.x += dir.acceleration.x * fps_ctrl.dt;
-                movement.position.y += dir.acceleration.y * fps_ctrl.dt;
+                movement.position.x += dir.acceleration.x * VEL * fps_ctrl.dt;
+                movement.position.y += dir.acceleration.y * VEL * fps_ctrl.dt;
 
                 dir.acceleration.x = 0.0;
                 dir.acceleration.y = 0.0;
