@@ -74,7 +74,7 @@ fn main() -> Result<(), SDLErrs> {
 
     let mut update_mob = world.query::<(&mut AccelerationComp, &MobComp, &MovementComp)>();
     let mut update_mob_self_collition1 = world.query::<(&mut AccelerationComp, &MobComp, Entity, &MovementComp)>();
-    let mut update_mob_self_collition2 = world.query::<(&mut AccelerationComp, &mut MobComp, Entity, &mut MovementComp)>();
+    let mut update_mob_self_collition2 = world.query::<(&AccelerationComp, &MobComp, Entity, &MovementComp)>();
     let mut update_all = world.query::<(&mut AccelerationComp, &mut SpriteComp, &mut MovementComp)>();
 
 
@@ -143,7 +143,7 @@ fn main() -> Result<(), SDLErrs> {
             // mob other mob collision
             for (mut dir1, _mob1, entt1, movement1) in unsafe { update_mob_self_collition1.iter_unchecked(&world) } {
                 // collition with other mob
-                'inner: for (mut dir2, _mob2, entt2, mut movement2) in unsafe { update_mob_self_collition2.iter_unchecked(&world) } {
+                'inner: for (dir2, _mob2, entt2,  movement2) in  update_mob_self_collition2.iter(&world) {
                     if entt1 == entt2 {
                         continue 'inner;
                     }
